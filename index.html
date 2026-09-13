@@ -409,118 +409,103 @@
   <!-- Download Counter Script -->
   <!-- Live Global Cloud Sync & Anti-Spam Counter Script -->
   <script>
-    const STORAGE_KEY_ANDROID = 'df_dl_time_android';
-    const STORAGE_KEY_IOS = 'df_dl_time_ios';
-    const COOLDOWN_MS = 300000; // 5 menit cooldown per HP/device agar tidak bisa dispam
+    const STORAGE_KEY_ANDROID_TIME = 'df_dl_time_android';
+    const STORAGE_KEY_IOS_TIME = 'df_dl_time_ios';
+    const COOLDOWN_MS = 300000; // 5 menit cooldown per device
 
-    let globalAndroid = 0;
-    let globalIos = 0;
-    let isFetching = false;
+    // Ambil angka tersimpan agar tidak pernah reset ke 0 saat refresh
+    let baseAndroid = parseInt(localStorage.getItem('df_persistent_android') || '0');
+    let baseIos = parseInt(localStorage.getItem('df_persistent_ios') || '0');
 
     function renderDisplay() {
-      const grandTotal = globalAndroid + globalIos;
-      document.getElementById('android-count').textContent = globalAndroid.toLocaleString();
-      document.getElementById('ios-count').textContent = globalIos.toLocaleString();
+      const grandTotal = baseAndroid + baseIos;
+      document.getElementById('android-count').textContent = baseAndroid.toLocaleString();
+      document.getElementById('ios-count').textContent = baseIos.toLocaleString();
       document.getElementById('total-count').textContent = grandTotal.toLocaleString();
     }
 
-    // Sync counts across all devices using Global Cloud API & GitHub Release API
+    // Sync counts across devices - MONOTONIC: Hanya meng-update jika angka cloud LEBIH BESAR
     async function syncGlobalStats() {
-      if (isFetching) return;
-      isFetching = true;
-
       try {
-        // 1. Fetch GitHub Release Stats
-        let ghAndroid = 0;
-        let ghIos = 0;
-        try {
-          const ghRes = await fetch('https://api.github.com/repos/MuhammadFikriiii/DongFlix/releases');
-          if (ghRes.ok) {
-            const releases = await ghRes.json();
-            releases.forEach(r => {
-              if (r.assets && Array.isArray(r.assets)) {
-                r.assets.forEach(a => {
-                  if (a.name.endsWith('.apk')) ghAndroid += a.download_count || 0;
-                  if (a.name.endsWith('.ipa')) ghIos += a.download_count || 0;
-                });
-              }
-            });
-          }
-        } catch (e) {}
+        const [cAndroidRes, cIosRes] = await Promise.all([
+          fetch('https://api.counterapi.dev/v1/dongflix_v2/android/').catch(() => null),
+          fetch('https://api.counterapi.dev/v1/dongflix_v2/ios/').catch(() => null)
+        ]);
 
-        // 2. Fetch Global Cloud Counter Stats
-        let cloudAndroid = 0;
-        let cloudIos = 0;
-        try {
-          const [cAndroidRes, cIosRes] = await Promise.all([
-            fetch('https://api.counterapi.dev/v1/dongflix_app_v1/android_dl/').catch(() => null),
-            fetch('https://api.counterapi.dev/v1/dongflix_app_v1/ios_dl/').catch(() => null)
-          ]);
-
-          if (cAndroidRes && cAndroidRes.ok) {
-            const d = await cAndroidRes.json();
-            cloudAndroid = d.count || 0;
+        if (cAndroidRes && cAndroidRes.ok) {
+          const d = await cAndroidRes.json();
+          if (d && typeof d.count === 'number' && d.count > baseAndroid) {
+            baseAndroid = d.count;
+            localStorage.setItem('df_persistent_android', baseAndroid);
           }
-          if (cIosRes && cIosRes.ok) {
-            const d = await cIosRes.json();
-            cloudIos = d.count || 0;
-          }
-        } catch (e) {}
+        }
 
-        // Take the highest count between GitHub download API & Cloud Counter
-        globalAndroid = Math.max(ghAndroid, cloudAndroid);
-        globalIos = Math.max(ghIos, cloudIos);
+        if (cIosRes && cIosRes.ok) {
+          const d = await cIosRes.json();
+          if (d && typeof d.count === 'number' && d.count > baseIos) {
+            baseIos = d.count;
+            localStorage.setItem('df_persistent_ios', baseIos);
+          }
+        }
+
         renderDisplay();
       } catch (err) {
-        console.log('Sync fallback:', err);
-      } finally {
-        isFetching = false;
+        console.log('Sync error:', err);
       }
     }
 
     // Anti-Spam Download Handler
     async function handleDownload(type) {
       const now = Date.now();
-      const lastKey = type === 'android' ? STORAGE_KEY_ANDROID : STORAGE_KEY_IOS;
+      const lastKey = type === 'android' ? STORAGE_KEY_ANDROID_TIME : STORAGE_KEY_IOS_TIME;
       const lastTime = parseInt(localStorage.getItem(lastKey) || '0');
 
-      // Proteksi Anti-Spam: jika device ini sudah klik dalam 5 menit terakhir, jangan tambah counter
+      // Proteksi Anti-Spam (5 menit cooldown)
       if (now - lastTime < COOLDOWN_MS) {
-        console.log('Unduhan sudah terhitung untuk perangkat ini (Anti-Spam Active).');
+        console.log('Unduhan sudah terhitung baru-baru ini untuk perangkat ini.');
         return;
       }
 
-      // Catat waktu klik device ini
       localStorage.setItem(lastKey, now.toString());
 
-      // Update hitungan secara global ke Cloud Counter
+      // Tambah angka lokal secara instan dan simpan permanen
+      if (type === 'android') {
+        baseAndroid++;
+        localStorage.setItem('df_persistent_android', baseAndroid);
+      } else {
+        baseIos++;
+        localStorage.setItem('df_persistent_ios', baseIos);
+      }
+      renderDisplay();
+
+      // Kirim increment ke Global Cloud Counter
       try {
         const endpoint = type === 'android'
-          ? 'https://api.counterapi.dev/v1/dongflix_app_v1/android_dl/up'
-          : 'https://api.counterapi.dev/v1/dongflix_app_v1/ios_dl/up';
+          ? 'https://api.counterapi.dev/v1/dongflix_v2/android/up'
+          : 'https://api.counterapi.dev/v1/dongflix_v2/ios/up';
 
-        const res = await fetch(endpoint);
-        if (res.ok) {
-          const data = await res.json();
-          if (type === 'android') globalAndroid = Math.max(globalAndroid + 1, data.count || 0);
-          if (type === 'ios') globalIos = Math.max(globalIos + 1, data.count || 0);
-        } else {
-          if (type === 'android') globalAndroid++;
-          if (type === 'ios') globalIos++;
-        }
-      } catch (e) {
-        if (type === 'android') globalAndroid++;
-        if (type === 'ios') globalIos++;
-      }
-
-      renderDisplay();
+        fetch(endpoint).then(res => res.json()).then(data => {
+          if (data && typeof data.count === 'number') {
+            if (type === 'android' && data.count > baseAndroid) {
+              baseAndroid = data.count;
+              localStorage.setItem('df_persistent_android', baseAndroid);
+            }
+            if (type === 'ios' && data.count > baseIos) {
+              baseIos = data.count;
+              localStorage.setItem('df_persistent_ios', baseIos);
+            }
+            renderDisplay();
+          }
+        }).catch(() => {});
+      } catch (e) {}
     }
 
     // Event listeners
     document.getElementById('dl-android').addEventListener('click', () => handleDownload('android'));
     document.getElementById('dl-ios').addEventListener('click', () => handleDownload('ios'));
 
-    // Initial sync & Real-Time Auto-Polling setiap 10 detik agar Device 2 langsung terupdate jika Device 1 klik!
+    // Initial render & sync
+    renderDisplay();
     syncGlobalStats();
     setInterval(syncGlobalStats, 10000);
   </script>
