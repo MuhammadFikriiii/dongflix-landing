@@ -407,67 +407,122 @@
   </div>
 
   <!-- Download Counter Script -->
+  <!-- Live Global Cloud Sync & Anti-Spam Counter Script -->
   <script>
-    let localAndroid = parseInt(localStorage.getItem('df_android_cnt') || '0');
-    let localIos = parseInt(localStorage.getItem('df_ios_cnt') || '0');
+    const STORAGE_KEY_ANDROID = 'df_dl_time_android';
+    const STORAGE_KEY_IOS = 'df_dl_time_ios';
+    const COOLDOWN_MS = 300000; // 5 menit cooldown per HP/device agar tidak bisa dispam
 
-    let baseAndroid = 0;
-    let baseIos = 0;
+    let globalAndroid = 0;
+    let globalIos = 0;
+    let isFetching = false;
 
-    function renderCounts() {
-      const androidTotal = baseAndroid + localAndroid;
-      const iosTotal = baseIos + localIos;
-      const grandTotal = androidTotal + iosTotal;
-
-      document.getElementById('android-count').textContent = androidTotal.toLocaleString();
-      document.getElementById('ios-count').textContent = iosTotal.toLocaleString();
+    function renderDisplay() {
+      const grandTotal = globalAndroid + globalIos;
+      document.getElementById('android-count').textContent = globalAndroid.toLocaleString();
+      document.getElementById('ios-count').textContent = globalIos.toLocaleString();
       document.getElementById('total-count').textContent = grandTotal.toLocaleString();
     }
 
-    // Fetch actual live download stats from GitHub Release API
-    async function fetchGitHubStats() {
+    // Sync counts across all devices using Global Cloud API & GitHub Release API
+    async function syncGlobalStats() {
+      if (isFetching) return;
+      isFetching = true;
+
       try {
-        const response = await fetch('https://api.github.com/repos/MuhammadFikriiii/DongFlix/releases');
-        if (response.ok) {
-          const releases = await response.json();
-          let apkDownloads = 0;
-          let ipaDownloads = 0;
+        // 1. Fetch GitHub Release Stats
+        let ghAndroid = 0;
+        let ghIos = 0;
+        try {
+          const ghRes = await fetch('https://api.github.com/repos/MuhammadFikriiii/DongFlix/releases');
+          if (ghRes.ok) {
+            const releases = await ghRes.json();
+            releases.forEach(r => {
+              if (r.assets && Array.isArray(r.assets)) {
+                r.assets.forEach(a => {
+                  if (a.name.endsWith('.apk')) ghAndroid += a.download_count || 0;
+                  if (a.name.endsWith('.ipa')) ghIos += a.download_count || 0;
+                });
+              }
+            });
+          }
+        } catch (e) {}
 
-          releases.forEach(release => {
-            if (release.assets && Array.isArray(release.assets)) {
-              release.assets.forEach(asset => {
-                if (asset.name.endsWith('.apk')) {
-                  apkDownloads += asset.download_count || 0;
-                } else if (asset.name.endsWith('.ipa')) {
-                  ipaDownloads += asset.download_count || 0;
-                }
-              });
-            }
-          });
+        // 2. Fetch Global Cloud Counter Stats
+        let cloudAndroid = 0;
+        let cloudIos = 0;
+        try {
+          const [cAndroidRes, cIosRes] = await Promise.all([
+            fetch('https://api.counterapi.dev/v1/dongflix_app_v1/android_dl/').catch(() => null),
+            fetch('https://api.counterapi.dev/v1/dongflix_app_v1/ios_dl/').catch(() => null)
+          ]);
 
-          baseAndroid = apkDownloads;
-          baseIos = ipaDownloads;
-        }
+          if (cAndroidRes && cAndroidRes.ok) {
+            const d = await cAndroidRes.json();
+            cloudAndroid = d.count || 0;
+          }
+          if (cIosRes && cIosRes.ok) {
+            const d = await cIosRes.json();
+            cloudIos = d.count || 0;
+          }
+        } catch (e) {}
+
+        // Take the highest count between GitHub download API & Cloud Counter
+        globalAndroid = Math.max(ghAndroid, cloudAndroid);
+        globalIos = Math.max(ghIos, cloudIos);
+        renderDisplay();
       } catch (err) {
-        console.log('GitHub API offline/rate-limited, using real local counter.');
+        console.log('Sync fallback:', err);
+      } finally {
+        isFetching = false;
       }
-      renderCounts();
     }
 
-    renderCounts();
-    fetchGitHubStats();
+    // Anti-Spam Download Handler
+    async function handleDownload(type) {
+      const now = Date.now();
+      const lastKey = type === 'android' ? STORAGE_KEY_ANDROID : STORAGE_KEY_IOS;
+      const lastTime = parseInt(localStorage.getItem(lastKey) || '0');
 
-    document.getElementById('dl-android').addEventListener('click', function () {
-      localAndroid++;
-      localStorage.setItem('df_android_cnt', localAndroid);
-      renderCounts();
-    });
+      // Proteksi Anti-Spam: jika device ini sudah klik dalam 5 menit terakhir, jangan tambah counter
+      if (now - lastTime < COOLDOWN_MS) {
+        console.log('Unduhan sudah terhitung untuk perangkat ini (Anti-Spam Active).');
+        return;
+      }
 
-    document.getElementById('dl-ios').addEventListener('click', function () {
-      localIos++;
-      localStorage.setItem('df_ios_cnt', localIos);
-      renderCounts();
-    });
+      // Catat waktu klik device ini
+      localStorage.setItem(lastKey, now.toString());
+
+      // Update hitungan secara global ke Cloud Counter
+      try {
+        const endpoint = type === 'android'
+          ? 'https://api.counterapi.dev/v1/dongflix_app_v1/android_dl/up'
+          : 'https://api.counterapi.dev/v1/dongflix_app_v1/ios_dl/up';
+
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const data = await res.json();
+          if (type === 'android') globalAndroid = Math.max(globalAndroid + 1, data.count || 0);
+          if (type === 'ios') globalIos = Math.max(globalIos + 1, data.count || 0);
+        } else {
+          if (type === 'android') globalAndroid++;
+          if (type === 'ios') globalIos++;
+        }
+      } catch (e) {
+        if (type === 'android') globalAndroid++;
+        if (type === 'ios') globalIos++;
+      }
+
+      renderDisplay();
+    }
+
+    // Event listeners
+    document.getElementById('dl-android').addEventListener('click', () => handleDownload('android'));
+    document.getElementById('dl-ios').addEventListener('click', () => handleDownload('ios'));
+
+    // Initial sync & Real-Time Auto-Polling setiap 10 detik agar Device 2 langsung terupdate jika Device 1 klik!
+    syncGlobalStats();
+    setInterval(syncGlobalStats, 10000);
   </script>
 </body>
 
