@@ -203,6 +203,15 @@
       background: rgba(255, 255, 255, 0.08);
     }
 
+    .btn-download.btn-support {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .btn-download.btn-support:hover {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+
     .btn-label {
       display: flex;
       align-items: center;
@@ -355,8 +364,8 @@
         <div class="feature-list">
           <span class="chip">Tanpa Iklan</span>
           <span class="chip">Gratis</span>
-          <span class="chip">🍿 Sub Indo</span>
-          <span class="chip">📺 Beta v1.0.0.0</span>
+          <span class="chip">Sub Indo</span>
+          <span class="chip">Beta v1.0.0</span>
         </div>
 
         <!-- Download Buttons -->
@@ -376,12 +385,20 @@
             </div>
             <span class="btn-version">v1.0.0</span>
           </a>
+
+          <a href="https://trakteer.id/DongFlix" target="_blank" rel="noopener noreferrer"
+            class="btn-download btn-support" id="trakteer-support">
+            <div class="btn-label">
+              <span>💛 Dukung via Trakteer</span>
+            </div>
+            <span class="btn-version">Support</span>
+          </a>
         </div>
 
-        <!-- Live Download Counter (Starts at 0 & Syncs with GitHub API) -->
+        <!-- Download Tracker Android & iOS -->
         <div class="counter-box">
           <div class="counter-left">
-            <span class="counter-title">Total Unduhan</span>
+            <span class="counter-title">Tracking Download</span>
             <div class="counter-value">
               <span class="dot-live"></span>
               <span id="total-count">0</span>
@@ -407,15 +424,18 @@
   </div>
 
   <!-- Download Counter Script -->
-  <!-- Live Global Cloud Sync & Anti-Spam Counter Script -->
   <script>
     const STORAGE_KEY_ANDROID_TIME = 'df_dl_time_android';
     const STORAGE_KEY_IOS_TIME = 'df_dl_time_ios';
-    const COOLDOWN_MS = 300000; // 5 menit cooldown per device
+    const COOLDOWN_MS = 300000;
 
-    // Ambil angka tersimpan agar tidak pernah reset ke 0 saat refresh
-    let baseAndroid = parseInt(localStorage.getItem('df_persistent_android') || '0');
-    let baseIos = parseInt(localStorage.getItem('df_persistent_ios') || '0');
+    // Ganti owner/repo sesuai repository GitHub yang benar-benar dipakai.
+    const GITHUB_OWNER = 'DongFlix';
+    const GITHUB_REPO = 'DongFlix';
+    const GITHUB_RELEASE_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
+
+    let baseAndroid = parseInt(localStorage.getItem('df_persistent_android') || '0', 10);
+    let baseIos = parseInt(localStorage.getItem('df_persistent_ios') || '0', 10);
 
     function renderDisplay() {
       const grandTotal = baseAndroid + baseIos;
@@ -424,90 +444,103 @@
       document.getElementById('total-count').textContent = grandTotal.toLocaleString();
     }
 
-    // Sync counts across devices - MONOTONIC: Hanya meng-update jika angka cloud LEBIH BESAR
-    async function syncGlobalStats() {
-      try {
-        const [cAndroidRes, cIosRes] = await Promise.all([
-          fetch('https://api.counterapi.dev/v1/dongflix_v2/android/').catch(() => null),
-          fetch('https://api.counterapi.dev/v1/dongflix_v2/ios/').catch(() => null)
-        ]);
+    function setStoredCounter(type, value) {
+      const key = type === 'android' ? 'df_persistent_android' : 'df_persistent_ios';
+      localStorage.setItem(key, String(value));
+    }
 
-        if (cAndroidRes && cAndroidRes.ok) {
-          const d = await cAndroidRes.json();
-          if (d && typeof d.count === 'number' && d.count > baseAndroid) {
-            baseAndroid = d.count;
-            localStorage.setItem('df_persistent_android', baseAndroid);
-          }
+    function getAssetDownloadCounts(releaseData) {
+      const assets = Array.isArray(releaseData && releaseData.assets) ? releaseData.assets : [];
+      let androidCount = 0;
+      let iosCount = 0;
+
+      assets.forEach((asset) => {
+        const name = (asset.name || '').toLowerCase();
+        const count = Number(asset.download_count || 0);
+
+        if (name.includes('android')) {
+          androidCount = Math.max(androidCount, count);
         }
 
-        if (cIosRes && cIosRes.ok) {
-          const d = await cIosRes.json();
-          if (d && typeof d.count === 'number' && d.count > baseIos) {
-            baseIos = d.count;
-            localStorage.setItem('df_persistent_ios', baseIos);
-          }
+        if (name.includes('ios')) {
+          iosCount = Math.max(iosCount, count);
+        }
+      });
+
+      return { androidCount, iosCount };
+    }
+
+    async function syncGlobalStats() {
+      try {
+        const response = await fetch(GITHUB_RELEASE_URL, {
+          headers: {
+            'Accept': 'application/vnd.github+json',
+            'User-Agent': 'DongFlix-Landing'
+          },
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const counts = getAssetDownloadCounts(data);
+
+        if (counts.androidCount > baseAndroid) {
+          baseAndroid = counts.androidCount;
+          setStoredCounter('android', baseAndroid);
+        }
+
+        if (counts.iosCount > baseIos) {
+          baseIos = counts.iosCount;
+          setStoredCounter('ios', baseIos);
         }
 
         renderDisplay();
       } catch (err) {
-        console.log('Sync error:', err);
+        console.log('GitHub release sync error:', err);
       }
     }
 
-    // Anti-Spam Download Handler
-    async function handleDownload(type) {
+    function handleDownload(type, url) {
       const now = Date.now();
       const lastKey = type === 'android' ? STORAGE_KEY_ANDROID_TIME : STORAGE_KEY_IOS_TIME;
-      const lastTime = parseInt(localStorage.getItem(lastKey) || '0');
+      const lastTime = parseInt(localStorage.getItem(lastKey) || '0', 10);
+      const shouldCount = now - lastTime >= COOLDOWN_MS;
 
-      // Proteksi Anti-Spam (5 menit cooldown)
-      if (now - lastTime < COOLDOWN_MS) {
-        console.log('Unduhan sudah terhitung baru-baru ini untuk perangkat ini.');
-        return;
+      if (shouldCount) {
+        localStorage.setItem(lastKey, String(now));
+
+        if (type === 'android') {
+          baseAndroid += 1;
+          setStoredCounter('android', baseAndroid);
+        } else {
+          baseIos += 1;
+          setStoredCounter('ios', baseIos);
+        }
+
+        renderDisplay();
       }
 
-      localStorage.setItem(lastKey, now.toString());
-
-      // Tambah angka lokal secara instan dan simpan permanen
-      if (type === 'android') {
-        baseAndroid++;
-        localStorage.setItem('df_persistent_android', baseAndroid);
-      } else {
-        baseIos++;
-        localStorage.setItem('df_persistent_ios', baseIos);
-      }
-      renderDisplay();
-
-      // Kirim increment ke Global Cloud Counter
-      try {
-        const endpoint = type === 'android'
-          ? 'https://api.counterapi.dev/v1/dongflix_v2/android/up'
-          : 'https://api.counterapi.dev/v1/dongflix_v2/ios/up';
-
-        fetch(endpoint).then(res => res.json()).then(data => {
-          if (data && typeof data.count === 'number') {
-            if (type === 'android' && data.count > baseAndroid) {
-              baseAndroid = data.count;
-              localStorage.setItem('df_persistent_android', baseAndroid);
-            }
-            if (type === 'ios' && data.count > baseIos) {
-              baseIos = data.count;
-              localStorage.setItem('df_persistent_ios', baseIos);
-            }
-            renderDisplay();
-          }
-        }).catch(() => {});
-      } catch (e) {}
+      setTimeout(() => {
+        window.location.href = url;
+      }, 180);
     }
 
-    // Event listeners
-    document.getElementById('dl-android').addEventListener('click', () => handleDownload('android'));
-    document.getElementById('dl-ios').addEventListener('click', () => handleDownload('ios'));
+    document.getElementById('dl-android').addEventListener('click', (event) => {
+      event.preventDefault();
+      handleDownload('android', event.currentTarget.href);
+    });
 
-    // Initial render & sync
+    document.getElementById('dl-ios').addEventListener('click', (event) => {
+      event.preventDefault();
+      handleDownload('ios', event.currentTarget.href);
+    });
+
     renderDisplay();
     syncGlobalStats();
-    setInterval(syncGlobalStats, 10000);
+    setInterval(syncGlobalStats, 30000);
   </script>
 </body>
 
