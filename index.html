@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DongFlix - Unduh Aplikasi Streaming Anime & Donghua Sub Indo</title>
+  <meta name="description"
+    content="Aplikasi resmi DongFlix untuk Android (APK) dan iOS (IPA). Nonton Anime, Donghua & Film Subtitle Indonesia tanpa iklan.">
+  <meta name="theme-color" content="#0B0B0F">
+
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #0B0B0F;
+      --surface: #16161C;
+      --surface-elevated: #20212A;
+      --accent: #2563EB;
+      --accent-hover: #1D4ED8;
+      --accent-soft: rgba(37, 99, 235, 0.15);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-primary: #FFFFFF;
+      --text-secondary: #A7A7B2;
+      --text-tertiary: #6E6E78;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Ambient Scrim Background */
+    .app-bg-radial {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 75%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Outer Viewport Wrapper */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 900px;
+      max-height: 94vh;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* App Theme Main Card */
+    .app-card {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 32px;
+      align-items: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Left Side: Brand & Downloads */
+    .app-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .app-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      object-fit: cover;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .app-title-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .app-tagline {
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .app-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    /* Feature Chips */
+    .feature-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .chip {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Download Actions */
+    .download-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .btn-download {
+      width: 100%;
+      background: var(--accent);
+      color: #FFFFFF;
+      text-decoration: none;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.2s ease, transform 0.15s ease;
+      cursor: pointer;
+    }
+
+    .btn-download:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-download.btn-secondary {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .btn-download.btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-version {
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    /* Real-Time Download Counter */
+    .counter-box {
+      width: 100%;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .counter-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .counter-title {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .counter-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .dot-live {
+      width: 8px;
+      height: 8px;
+      background: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    .counter-details {
+      text-align: right;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .counter-details span {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Right Side: App Screenshot / Preview */
+    .app-preview-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app-preview-img {
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      border-radius: 18px;
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Footer text */
+    .footer-credits {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* Responsive Mobile Layout */
+    @media (max-width: 768px) {
+      .app-card {
+        grid-template-columns: 1fr;
+        padding: 24px 20px;
+        gap: 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .app-preview-wrapper {
+        display: none;
+        /* Hide preview on small mobile to fit 1 screen cleanly */
+      }
+
+      .app-title {
+        font-size: 24px;
+      }
+
+      .brand-header {
+        margin-bottom: 12px;
+      }
+
+      .feature-list {
+        margin-bottom: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Ambient Scrim -->
+  <div class="app-bg-radial"></div>
+
+  <div class="container">
+    <main class="app-card">
+
+      <!-- Left Column: Information & Actions -->
+      <div class="app-info">
+        <!-- App Header with icon -->
+        <div class="brand-header">
+          <img src="app_icon.png" alt="DongFlix Icon" class="app-logo">
+          <div class="app-title-group">
+            <h1 class="app-title">DongFlix</h1>
+            <span class="app-tagline">Nonton Donghua & Anime</span>
+          </div>
+        </div>
+
+        <p class="app-desc">
+          Nikmati ribuan judul Donghua, Anime & Film favorit dengan Subtitle Indonesia jernih, server super cepat, dan
+          tanpa gangguan iklan.
+        </p>
+
+        <!-- Feature Chips -->
+        <div class="feature-list">
+          <span class="chip">Tanpa Iklan</span>
+          <span class="chip">Gratis</span>
+          <span class="chip">🍿 Sub Indo</span>
+          <span class="chip">📺 Beta v1.0.0.0</span>
+        </div>
+
+        <!-- Download Buttons -->
+        <div class="download-group">
+          <a href="https://github.com/MuhammadFikriiii/DongFlix/releases/download/v1.0.0/DongFlix-Android.apk"
+            class="btn-download" id="dl-android">
+            <div class="btn-label">
+              <span>🤖 Unduh Android</span>
+            </div>
+            <span class="btn-version">v1.0.0</span>
+          </a>
+
+          <a href="https://github.com/MuhammadFikriiii/DongFlix/releases/download/v1.0.0/DongFlix-iOS-Unsigned.ipa"
+            class="btn-download btn-secondary" id="dl-ios">
+            <div class="btn-label">
+              <span>🍏 Unduh iOS</span>
+            </div>
+            <span class="btn-version">v1.0.0</span>
+          </a>
+        </div>
+
+        <!-- Live Download Counter (Starts at 0 & Syncs with GitHub API) -->
+        <div class="counter-box">
+          <div class="counter-left">
+            <span class="counter-title">Total Unduhan</span>
+            <div class="counter-value">
+              <span class="dot-live"></span>
+              <span id="total-count">0</span>
+            </div>
+          </div>
+          <div class="counter-details">
+            <div>Android: <span id="android-count">0</span></div>
+            <div style="margin-top: 2px;">iOS: <span id="ios-count">0</span></div>
+          </div>
+        </div>
+
+        <div class="footer-credits">
+          © 2026 DongFlix • All Rights Reserved
+        </div>
+      </div>
+
+      <!-- Right Column: App UI Screenshot Preview -->
+      <div class="app-preview-wrapper">
+        <img src="app_preview.png" alt="DongFlix Preview" class="app-preview-img">
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Download Counter Script -->
+  <script>
+    let localAndroid = parseInt(localStorage.getItem('df_android_cnt') || '0');
+    let localIos = parseInt(localStorage.getItem('df_ios_cnt') || '0');
+
+    let baseAndroid = 0;
+    let baseIos = 0;
+
+    function renderCounts() {
+      const androidTotal = baseAndroid + localAndroid;
+      const iosTotal = baseIos + localIos;
+      const grandTotal = androidTotal + iosTotal;
+
+      document.getElementById('android-count').textContent = androidTotal.toLocaleString();
+      document.getElementById('ios-count').textContent = iosTotal.toLocaleString();
+      document.getElementById('total-count').textContent = grandTotal.toLocaleString();
+    }
+
+    // Fetch actual live download stats from GitHub Release API
+    async function fetchGitHubStats() {
+      try {
+        const response = await fetch('https://api.github.com/repos/MuhammadFikriiii/DongFlix/releases');
+        if (response.ok) {
+          const releases = await response.json();
+          let apkDownloads = 0;
+          let ipaDownloads = 0;
+
+          releases.forEach(release => {
+            if (release.assets && Array.isArray(release.assets)) {
+              release.assets.forEach(asset => {
+                if (asset.name.endsWith('.apk')) {
+                  apkDownloads += asset.download_count || 0;
+                } else if (asset.name.endsWith('.ipa')) {
+                  ipaDownloads += asset.download_count || 0;
+                }
+              });
+            }
+          });
+
+          baseAndroid = apkDownloads;
+          baseIos = ipaDownloads;
+        }
+      } catch (err) {
+        console.log('GitHub API offline/rate-limited, using real local counter.');
+      }
+      renderCounts();
+    }
+
+    renderCounts();
+    fetchGitHubStats();
+
+    document.getElementById('dl-android').addEventListener('click', function () {
+      localAndroid++;
+      localStorage.setItem('df_android_cnt', localAndroid);
+      renderCounts();
+    });
+
+    document.getElementById('dl-ios').addEventListener('click', function () {
+      localIos++;
+      localStorage.setItem('df_ios_cnt', localIos);
+      renderCounts();
+    });
+  </script>
+</body>
+
+</html>
