@@ -281,12 +281,14 @@
       font-weight: 600;
     }
 
-    /* Right Side: App Screenshot / Preview */
     .app-preview-wrapper {
       width: 100%;
+      max-width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
+      min-width: 0; /* Mencegah overflow keluar dari grid container */
+      overflow: hidden; /* Memastikan tidak ada yang luber di mobile/desktop */
     }
 
     .preview-scroll {
@@ -340,10 +342,12 @@
       .app-preview-wrapper {
         display: flex;
         width: 100%;
+        max-width: 100%;
+        margin-top: 8px;
       }
 
       .app-preview-img {
-        width: 180px; /* Lebar lebih kecil di mobile */
+        width: 160px; /* Lebar lebih kompak agar terlihat rapi di mobile */
       }
 
       .app-title {
