@@ -289,10 +289,31 @@
       align-items: center;
     }
 
-    .app-preview-img {
+    .preview-scroll {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
       width: 100%;
-      max-width: 320px;
-      height: auto;
+      padding-bottom: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .preview-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+    
+    .preview-scroll::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 10px;
+    }
+
+    .app-preview-img {
+      flex: 0 0 auto;
+      width: 240px;
+      scroll-snap-align: center;
       border-radius: 18px;
       object-fit: cover;
       border: 1px solid var(--border-color);
@@ -317,8 +338,12 @@
       }
 
       .app-preview-wrapper {
-        display: none;
-        /* Hide preview on small mobile to fit 1 screen cleanly */
+        display: flex;
+        width: 100%;
+      }
+
+      .app-preview-img {
+        width: 180px; /* Lebar lebih kecil di mobile */
       }
 
       .app-title {
@@ -365,7 +390,7 @@
           <span class="chip">Tanpa Iklan</span>
           <span class="chip">Gratis</span>
           <span class="chip">Sub Indo</span>
-          <span class="chip">Beta v1.0.1</span>
+          <span class="chip">Beta v1.0.2</span>
         </div>
 
         <!-- Download Buttons -->
@@ -374,14 +399,14 @@
             <div class="btn-label">
               <span>🤖 Unduh Android</span>
             </div>
-            <span class="btn-version">v1.0.1</span>
+            <span class="btn-version">v1.0.2</span>
           </a>
 
           <a href="#" download="#" class="btn-download btn-secondary" id="dl-ios">
             <div class="btn-label">
               <span> Unduh iOS & Windows (soon)</span>
             </div>
-            <span class="btn-version">v1.0.1</span>
+            <span class="btn-version">v1.0.2</span>
           </a>
 
           <a href="https://trakteer.id/DongFlix" target="_blank" rel="noopener noreferrer"
@@ -405,7 +430,13 @@
 
       <!-- Right Column: App UI Screenshot Preview -->
       <div class="app-preview-wrapper">
-        <img src="app_preview.png" alt="DongFlix Preview" class="app-preview-img">
+        <div class="preview-scroll">
+          <img src="preview-1.jpeg" alt="DongFlix Preview 1" class="app-preview-img">
+          <img src="preview-2.jpeg" alt="DongFlix Preview 2" class="app-preview-img">
+          <img src="preview-3.jpeg" alt="DongFlix Preview 3" class="app-preview-img">
+          <img src="preview-4.jpeg" alt="DongFlix Preview 4" class="app-preview-img">
+          <img src="preview-5.jpeg" alt="DongFlix Preview 5" class="app-preview-img">
+        </div>
       </div>
 
     </main>
