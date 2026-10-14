@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090b10">
+  <meta name="description" content="Panduan memasang DongFlix iOS menggunakan Scarlet.">
+  <title>Panduan DongFlix iOS — Scarlet</title>
+  <link rel="icon" href="app_icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090b10;
+      --panel: #11141c;
+      --panel-2: #161b26;
+      --line: #282d39;
+      --text: #f5f7fb;
+      --muted: #9aa3b4;
+      --blue: #2d70f7;
+      --max: 780px
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Nunito, Arial, sans-serif
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none
+    }
+
+    .wrap {
+      width: min(var(--max), calc(100% - 40px));
+      margin: auto
+    }
+
+    .top {
+      height: 68px;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .top .wrap {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px
+    }
+
+    .logo {
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -1.5px
+    }
+
+    .logo b {
+      color: #5790ff
+    }
+
+    .back {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700
+    }
+
+    .back:hover {
+      color: #fff
+    }
+
+    .hero {
+      padding: 70px 0 34px
+    }
+
+    .eyebrow {
+      margin: 0 0 13px;
+      color: #78a4ff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(34px, 7vw, 52px);
+      line-height: 1.12;
+      letter-spacing: -.045em
+    }
+
+    .hero p {
+      max-width: 620px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7
+    }
+
+    .version {
+      display: inline-flex;
+      margin-top: 20px;
+      padding: 7px 11px;
+      border: 1px solid #35568e;
+      border-radius: 999px;
+      background: #101a2c;
+      color: #d8e6ff;
+      font-size: 12px;
+      font-weight: 800
+    }
+
+    .guide {
+      padding: 22px 0 70px
+    }
+
+    .notice,
+    .steps,
+    .download {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel)
+    }
+
+    .notice {
+      padding: 17px 18px;
+      margin-bottom: 16px;
+      color: #d8e6ff;
+      line-height: 1.6;
+      font-size: 14px
+    }
+
+    .notice strong {
+      color: #fff
+    }
+
+    .steps {
+      padding: 8px 24px
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 14px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .step:last-child {
+      border-bottom: 0
+    }
+
+    .number {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #172a50;
+      color: #8bb1ff;
+      font-size: 13px;
+      font-weight: 800
+    }
+
+    .step h2 {
+      margin: 2px 0 6px;
+      font-size: 16px
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65
+    }
+
+    .download {
+      margin-top: 16px;
+      padding: 24px;
+      text-align: center
+    }
+
+    .download h2 {
+      margin: 0 0 8px;
+      font-size: 21px
+    }
+
+    .download p {
+      margin: 0 auto 18px;
+      max-width: 510px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6
+    }
+
+    .button {
+      min-height: 47px;
+      padding: 0 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      background: var(--blue);
+      color: #fff;
+      font: 800 14px Nunito, Arial, sans-serif
+    }
+
+    .button[disabled] {
+      cursor: not-allowed;
+      background: #242a36;
+      color: #7d8799;
+      border-color: #343b49
+    }
+
+    .fine {
+      display: block;
+      margin-top: 11px;
+      color: #6f788a;
+      font-size: 11px
+    }
+
+    .footer {
+      padding: 28px 0;
+      border-top: 1px solid var(--line);
+      color: #778194;
+      font-size: 12px
+    }
+
+    .footer .wrap {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap
+    }
+
+    @media(max-width:560px) {
+      .wrap {
+        width: calc(100% - 28px)
+      }
+
+      .top {
+        height: 62px
+      }
+
+      .hero {
+        padding: 48px 0 25px
+      }
+
+      .steps {
+        padding: 6px 17px
+      }
+
+      .step {
+        grid-template-columns: 30px 1fr;
+        gap: 11px
+      }
+
+      .download {
+        padding: 21px 17px
+      }
+
+      .button {
+        width: 100%
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="top">
+    <div class="wrap"><a href="index.html" class="logo">Dong<b>Flix</b></a><a class="back" href="index.html">←
+        Kembali</a></div>
+  </header>
+  <main>
+    <section class="guide">
+      <div class="wrap">
+        <div class="download">
+          <h2>Download DongFlix untuk iOS</h2>
+          <p>Tekan tombol di bawah untuk mengunduh file IPA v1.0.1 Beta. Ikuti panduan instalasi di bawah agar file
+            dapat dipasang dengan benar.</p><a class="button"
+            href="https://github.com/MuhammadFikriiii/dongflix-landing/releases/download/IOS/DongFlix-iOS-1.0.1-beta-Scarlet.ipa"
+            download>Download IPA — v1.0.1 Beta</a><span class="fine">Membutuhkan iOS 15.5 atau lebih baru.</span>
+        </div>
+        <div class="notice" style="margin-top:16px"><strong>Sebelum mulai:</strong> pastikan Direct Install Scarlet
+          sedang berstatus <strong>Signed</strong>. Jika berstatus Revoked, tunggu sampai sertifikat aktif kembali.
+        </div>
+        <div class="steps">
+          <article class="step"><span class="number">1</span>
+            <div>
+              <h2>Pasang Scarlet</h2>
+              <p>Buka situs Scarlet melalui Safari di iPhone, pilih Direct Install, lalu selesaikan pemasangannya.</p>
+            </div>
+          </article>
+          <article class="step"><span class="number">2</span>
+            <div>
+              <h2>Izinkan pengembang</h2>
+              <p>Jika diminta, buka Pengaturan › Umum › VPN &amp; Manajemen Perangkat, pilih profil pengembang Scarlet,
+                lalu izinkan.</p>
+            </div>
+          </article>
+          <article class="step"><span class="number">3</span>
+            <div>
+              <h2>Import file ke Scarlet</h2>
+              <p>File IPA yang sudah diunduh tersimpan di aplikasi Files. Bagikan file tersebut ke Scarlet, atau buka
+                Scarlet lalu gunakan menu impor.</p>
+            </div>
+          </article>
+          <article class="step"><span class="number">4</span>
+            <div>
+              <h2>Buka menggunakan Scarlet</h2>
+              <p>Dari Files, bagikan file IPA ke Scarlet. Jika Scarlet tidak muncul, buka Scarlet lalu gunakan menu
+                impor dan pilih file tersebut.</p>
+            </div>
+          </article>
+          <article class="step"><span class="number">5</span>
+            <div>
+              <h2>Instal DongFlix</h2>
+              <p>Tekan Install di Scarlet dan tunggu ikon DongFlix muncul di layar utama. Jangan menghapus Scarlet
+                selama DongFlix masih digunakan.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="wrap"><span>© 2026 DongFlix</span><a href="policy.html">Kebijakan Privasi</a></div>
+  </footer>
+</body>
+
+</html>
